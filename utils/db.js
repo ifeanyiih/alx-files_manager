@@ -31,6 +31,20 @@ class DBClient {
     const filesCount = await files.estimatedDocumentCount();
     return filesCount;
   }
+
+  async emailExists(email) {
+    const query = { email };
+    const users = this.db.collection('users');
+    const user = await users.findOne(query, {});
+    if (user) return true;
+    return false;
+  }
+
+  async addUser(userData) {
+    const users = this.db.collection('users');
+    const result = await users.insertOne(userData);
+    return result;
+  }
 }
 
 const dbClient = new DBClient();
