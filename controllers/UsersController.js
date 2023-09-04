@@ -29,7 +29,7 @@ const UsersController = {
           password: hashedPass,
         };
         const result = await dbClient.addUser(userData);
-        const response = { email, id: result._id.toString() };
+        const response = { id: result.insertedId, email };
         res.json(response);
       }
     }
