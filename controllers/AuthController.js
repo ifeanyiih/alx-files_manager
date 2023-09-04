@@ -57,9 +57,8 @@ const AuthController = {
       res.statusCode = 401;
       res.json({ error: 'Unauthorized' });
     } else {
-      res.statusCode = 204;
       redisClient.del(`auth_${token}`);
-      res.end();
+      res.status(204).end();
     }
   },
 };
