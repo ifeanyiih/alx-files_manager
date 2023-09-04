@@ -3,8 +3,6 @@ import redisClient from '../utils/redis';
 
 const crypto = require('crypto');
 
-const hash = crypto.createHash('sha1');
-
 const UsersController = {
   async postNew(req, res) {
     const { body } = req;
@@ -23,6 +21,7 @@ const UsersController = {
         res.json({ error: 'Already exist' });
       } else {
         res.statusCode = 201;
+        const hash = crypto.createHash('sha1');
         hash.update(password);
         const hashedPass = hash.digest('hex');
         const userData = {
@@ -38,6 +37,11 @@ const UsersController = {
 
   async getMe(req, res) {
     const token = req.get('X-Token');
+    if (!token) {
+      res.statusCode = 401;
+      res.json({ error: 'Unauthorized' });
+      return;
+    }
     const id = await redisClient.get(`auth_${token}`);
     const user = await dbClient.findUser('_id', id);
     if (!user) {

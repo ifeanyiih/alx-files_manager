@@ -12,7 +12,7 @@ class DBClient {
       .then(() => {
         this.isalive = true;
         this.db = this.client.db(db);
-      });
+      }).catch((err) => console.log(err));
   }
 
   isAlive() {

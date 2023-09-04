@@ -4,16 +4,25 @@ import redisClient from '../utils/redis';
 
 const crypto = require('crypto');
 
-const hash = crypto.createHash('sha1');
-
 const AuthController = {
   async getConnect(req, res) {
     const Authorization = req.get('Authorization');
+    if (!Authorization) {
+      res.statusCode = 401;
+      res.json({ error: 'Unauthorized' });
+      return;
+    }
     const buff = Authorization.split(' ')[1];
+    if (!buff) {
+      res.statusCode = 401;
+      res.json({ error: 'Unauthorized' });
+      return;
+    }
     const decode = Buffer.from(buff, 'base64').toString('utf-8');
     const cred = decode.split(':');
     const email = cred[0];
     const password = cred[1];
+    const hash = crypto.createHash('sha1');
     hash.update(password);
     const hashedPass = hash.digest('hex');
     const exists = await dbClient.findUser('email', email);
@@ -37,6 +46,11 @@ const AuthController = {
 
   async getDisconnect(req, res) {
     const token = req.get('X-Token');
+    if (!token) {
+      res.statusCode = 401;
+      res.json({ error: 'Unauthorized' });
+      return;
+    }
     const id = await redisClient.get(`auth_${token}`);
     const user = await dbClient.findUser('_id', id);
     if (!user) {
