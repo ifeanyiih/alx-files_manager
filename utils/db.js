@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 
 const host = process.env.DB_HOST || 'localhost';
 const port = process.env.DB_PORT || 27017;
@@ -32,11 +32,16 @@ class DBClient {
     return filesCount;
   }
 
-  async emailExists(email) {
-    const query = { email };
+  async findUser(queryKey, queryVal) {
+    const query = {};
+    if (queryKey === '_id') {
+      query[queryKey] = ObjectId(queryVal);
+    } else {
+      query[queryKey] = queryVal;
+    }
     const users = this.db.collection('users');
     const user = await users.findOne(query, {});
-    if (user) return true;
+    if (user) return user;
     return false;
   }
 

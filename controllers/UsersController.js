@@ -1,4 +1,5 @@
 import dbClient from '../utils/db';
+import redisClient from '../utils/redis';
 
 const crypto = require('crypto');
 
@@ -16,7 +17,7 @@ const UsersController = {
     } else {
       const { email } = body;
       const { password } = body;
-      const emailExists = await dbClient.emailExists(email);
+      const emailExists = await dbClient.findUser('email', email);
       if (emailExists) {
         res.statusCode = 400;
         res.json({ error: 'Already exist' });
@@ -29,9 +30,22 @@ const UsersController = {
           password: hashedPass,
         };
         const result = await dbClient.addUser(userData);
-        const response = { email, id: result.insertedId };
+        const response = { email, id: result._id.toString() };
         res.json(response);
       }
+    }
+  },
+
+  async getMe(req, res) {
+    const token = req.get('X-Token');
+    const id = await redisClient.get(`auth_${token}`);
+    const user = await dbClient.findUser('_id', id);
+    if (!user) {
+      res.statusCode = 401;
+      res.json({ error: 'Unauthorized' });
+    } else {
+      res.statusCode = 200;
+      res.json({ id, email: user.email });
     }
   },
 };
