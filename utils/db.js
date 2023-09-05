@@ -1,5 +1,4 @@
 import { MongoClient, ObjectId } from 'mongodb';
-
 const host = process.env.DB_HOST || 'localhost';
 const port = process.env.DB_PORT || 27017;
 const db = process.DB_DATABASE || 'files_manager';
@@ -49,6 +48,21 @@ class DBClient {
     const users = this.db.collection('users');
     const result = await users.insertOne(userData);
     return result;
+  }
+
+  async addFile(fileData) {
+    const files = this.db.collection('files');
+    const result = await files.insertOne(fileData);
+    return result;
+  }
+
+  async findFile(queryKey, queryVal) {
+    const query = {};
+    query[queryKey] = queryVal;
+    const files = this.db.collection('files');
+    const file = await files.findOne(query, {});
+    if (file) return file;
+    return false;
   }
 }
 
