@@ -18,7 +18,13 @@ const AuthController = {
       res.json({ error: 'Unauthorized' });
       return;
     }
-    const decode = Buffer.from(buff, 'base64').toString('utf-8');
+    let decode = Buffer.from(buff, 'base64');
+    if (decode.toString('base64') === decode) {
+      decode = decode.toString('utf-8');
+    } else {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
     const cred = decode.split(':');
     const email = cred[0];
     const password = cred[1];
