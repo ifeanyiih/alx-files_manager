@@ -19,7 +19,7 @@ const AuthController = {
       return;
     }
     let decode = Buffer.from(buff, 'base64');
-    if (decode.toString('base64') === decode) {
+    if (decode.toString('base64') === buff) {
       decode = decode.toString('utf-8');
     } else {
       res.status(401).json({ error: 'Unauthorized' });
