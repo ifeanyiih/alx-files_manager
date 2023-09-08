@@ -1,8 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
-
-const crypto = require('crypto');
+import sha1 from 'sha1';
 
 const AuthController = {
   async getConnect(req, res) {
@@ -18,19 +17,15 @@ const AuthController = {
       res.json({ error: 'Unauthorized' });
       return;
     }
-    let decode = Buffer.from(buff, 'base64');
-    if (decode.toString('base64') === buff) {
-      decode = decode.toString('utf-8');
-    } else {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
-    }
-    const cred = decode.split(':');
+    let decoded = Buffer.from(buff, 'base64').toString();
+    const cred = decoded.split(':');
     const email = cred[0];
     const password = cred[1];
-    const hash = crypto.createHash('sha1');
-    hash.update(password);
-    const hashedPass = hash.digest('hex');
+    if (!email || !password) {
+        res.status(401).json({error: 'Unauthorized'});
+        return;
+    }
+    const hashedPass = sha1(password);
     const exists = await dbClient.findUser('email', email);
     if (exists) {
       if (exists.password !== hashedPass) {
