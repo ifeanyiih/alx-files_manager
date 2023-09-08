@@ -60,9 +60,9 @@ class DBClient {
   async findFile(queryKey, queryVal) {
     const query = {};
     if (queryKey === '_id') {
-        query[queryKey] = ObjectId(queryVal);
+      query[queryKey] = ObjectId(queryVal);
     } else {
-        query[queryKey] = queryVal;
+      query[queryKey] = queryVal;
     }
     const files = this.db.collection('files');
     const file = await files.findOne(query, {});
