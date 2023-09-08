@@ -1,7 +1,7 @@
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
+import sha1 from 'sha1';
 
-const crypto = require('crypto');
 
 const UsersController = {
   async postNew(req, res) {
@@ -21,9 +21,7 @@ const UsersController = {
         res.json({ error: 'Already exist' });
       } else {
         res.statusCode = 201;
-        const hash = crypto.createHash('sha1');
-        hash.update(password);
-        const hashedPass = hash.digest('hex');
+        const hashedPass = sha1(password);
         const userData = {
           email,
           password: hashedPass,
