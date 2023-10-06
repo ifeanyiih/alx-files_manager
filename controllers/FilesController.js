@@ -141,28 +141,28 @@ const FilesController = {
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
-    const {parentId = '0'} = req.query;
-    let {page} = req.query;
+    const { parentId = '0' } = req.query;
+    let { page } = req.query;
     page = Number(page) || 0;
-    
+
     const pageLimit = 20;
     const skip = page * pageLimit;
-    const query = {'parentId':parentId, 'userId': user._id};
+    const query = { parentId, userId: user._id };
     const pipeline = [
-        {'$match': query},
-        {'$skip': skip},
-        {'$limit': pageLimit},
+      { $match: query },
+      { $skip: skip },
+      { $limit: pageLimit },
     ];
 
     let result = await dbClient.findFiles(pipeline);
     result = result.map((res) => {
-        res.id = res._id;
-        delete res._id;
-        delete res.localPath;
-        return res;
+      res.id = res._id;
+      delete res._id;
+      delete res.localPath;
+      return res;
     });
     res.status(200).json(result).end();
-  }
+  },
 };
 
 module.exports = FilesController;

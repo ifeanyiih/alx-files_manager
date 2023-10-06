@@ -70,11 +70,11 @@ class DBClient {
     return false;
   }
 
-    async findFiles(pipeline) {
-        const files = this.db.collection('files');
-        const all = await files.aggregate(pipeline);
-        return all.toArray();
-    }
+  async findFiles(pipeline) {
+    const files = this.db.collection('files');
+    const all = await files.aggregate(pipeline);
+    return all.toArray();
+  }
 }
 
 const dbClient = new DBClient();
