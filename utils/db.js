@@ -70,14 +70,9 @@ class DBClient {
     return false;
   }
 
-    async findFiles(queryKey, queryVal, limit, page) {
+    async findFiles(pipeline) {
         const files = this.db.collection('files');
-        const query = {};
-        query[queryKey] = queryVal;
-        const skip = limit * page;
-        const all = await files.aggregate(
-            [{ '$match': query}, {'$skip': skip}, {'$limit': limit}]
-        );
+        const all = await files.aggregate(pipeline);
         return all.toArray();
     }
 }

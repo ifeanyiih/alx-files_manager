@@ -114,17 +114,17 @@ const FilesController = {
       const ID = req.params.id;
       const file = await dbClient.findFile('_id', ID);
       if (!file) {
-        res.json({ error: 'Not found' }).status(404).end();
+        res.status(404).json({ error: 'Not found' }).end();
         return;
       }
-      if (!(file.userId === userId)) {
-        res.json({ error: 'Not found' }).status(404).end();
+      if (!(file.userId.toString() === userId.toString())) {
+        res.status(404).json({ error: 'Not found' }).end();
         return;
       }
       const response = { id: file._id, ...file };
       delete response._id;
       delete response.localPath;
-      res.json(response).status(200).end();
+      res.status(200).json(response).end();
     }
   },
 
@@ -139,21 +139,30 @@ const FilesController = {
     const user = await dbClient.findUser('_id', userId);
     if (!user) {
       res.status(401).json({ error: 'Unauthorized' });
-    } else {
-      let { parentId, page } = req.query;
-      if (!parentId) parentId = 0;
-      if (!page) page = 0;
-      const limit = 20;
-      let result = await dbClient.findFiles('parentId', parentId, limit, page);
-      result = result.map((result) => {
-        const newResult = { id: result._id, ...result };
-        delete newResult._id;
-        delete newResult.localPath;
-        return newResult;
-      });
-      res.status(200).json(result).end();
+      return;
     }
-  },
+    const {parentId = '0'} = req.query;
+    let {page} = req.query;
+    page = Number(page) || 0;
+    
+    const pageLimit = 20;
+    const skip = page * pageLimit;
+    const query = {'parentId':parentId, 'userId': user._id};
+    const pipeline = [
+        {'$match': query},
+        {'$skip': skip},
+        {'$limit': pageLimit},
+    ];
+
+    let result = await dbClient.findFiles(pipeline);
+    result = result.map((res) => {
+        res.id = res._id;
+        delete res._id;
+        delete res.localPath;
+        return res;
+    });
+    res.status(200).json(result).end();
+  }
 };
 
 module.exports = FilesController;
