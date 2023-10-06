@@ -91,6 +91,69 @@ const FilesController = {
       res.status(201).json(responseData).end();
     }
   },
+
+  /**
+    * @async
+    * getShow: retrieves file documents based on ID
+    * @param {Request} req: Request Object
+    * @param {Response} res: Response Object
+    * @returns {Response}
+    */
+  async getShow(req, res) {
+    const token = req.get('X-Token');
+    if (!token) {
+      res.status(401).json({ error: 'Unauthorized' }).end();
+      return;
+    }
+    const key = `auth_${token}`;
+    const userId = await redisClient.get(key);
+    const user = await dbClient.findUser('_id', userId);
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' }).end();
+    } else {
+      const ID = req.params.id;
+      const file = await dbClient.findFile('_id', ID);
+      if (!file) {
+        res.json({ error: 'Not found' }).status(404).end();
+        return;
+      }
+      if (!(file.userId === userId)) {
+        res.json({ error: 'Not found' }).status(404).end();
+        return;
+      }
+      const response = { id: file._id, ...file };
+      delete response._id;
+      delete response.localPath;
+      res.json(response).status(200).end();
+    }
+  },
+
+  async getIndex(req, res) {
+    const token = req.get('X-Token');
+    if (!token) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const key = `auth_${token}`;
+    const userId = await redisClient.get(key);
+    const user = await dbClient.findUser('_id', userId);
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+    } else {
+      let { parentId, page } = req.query;
+      if (!parentId) parentId = 0;
+      if (!page) page = 0;
+      const limit = 20;
+      let result = await dbClient.findFiles('parentId', parentId, limit, page);
+      result = result.map((result) => {
+        const newResult = { id: result._id, ...result };
+        delete newResult._id;
+        delete newResult.localPath;
+        return newResult;
+      });
+      res.status(200).json(result).end();
+    }
+  },
 };
 
 module.exports = FilesController;
