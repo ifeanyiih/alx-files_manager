@@ -4,7 +4,7 @@ import redisClient from '../utils/redis';
 
 const fs = require('fs');
 
-let folderPath = process.env.FOLDER_PATH || '/tmp/files_manager';
+const folderPath = process.env.FOLDER_PATH || '/tmp/files_manager';
 
 const FilesController = {
   /**
@@ -27,10 +27,6 @@ const FilesController = {
       res.status(401).json({ error: 'Unauthorized' });
     } else {
       const { body } = req;
-      if (!body) {
-        res.status(400).json({ error: 'Bad Request' });
-        return;
-      }
       const {
         name, type, parentId, isPublic, data,
       } = body;
@@ -42,7 +38,7 @@ const FilesController = {
         res.status(400).json({ error: 'Missing type' });
         return;
       }
-      if (!data && type !== 'folder') {
+      if (!data && (type !== 'folder')) {
         res.status(400).json({ error: 'Missing data' });
         return;
       }
@@ -72,29 +68,27 @@ const FilesController = {
         responseData = { id: result.insertedId, ...fileData };
         delete responseData._id;
         res.status(201).json(responseData);
-      } else {
-        await fs.access(folderPath, fs.constants.F_OK, async (err) => {
-          if (err) {
-            await fs.mkdir(folderPath, { recursive: true }, (err) => {
-              if (err) console.log(err);
-            });
-          }
-        });
-
-        const fileUUID = uuidv4();
-        if (!folderPath.endsWith('/')) folderPath += '/';
-        const dataDecode = Buffer.from(data, 'base64').toString('utf-8');
-        await fs.writeFile(`${folderPath}${fileUUID}`, dataDecode, (err) => {
-          if (err) console.log(err);
-        });
-
-        fileData.localPath = `${folderPath}${fileUUID}`;
-        const result = await dbClient.addFile(fileData);
-        responseData = { id: result.insertedId, ...fileData };
-        delete responseData.localPath;
-        delete responseData._id;
-        res.status(201).json(responseData);
       }
+      const fileUUID = uuidv4();
+      const localPath = `${folderPath}/${fileUUID}`;
+      const dataDecode = Buffer.from(data, 'base64').toString('utf-8');
+      if (!fs.existsSync(folderPath)) {
+        await fs.mkdir(folderPath, { recursive: true }, (err) => {
+          if (err) throw err;
+        });
+      }
+
+      await fs.writeFile(localPath, dataDecode, (err) => {
+        if (err) console.log(err);
+        else console.log('file created');
+      });
+
+      fileData.localPath = localPath;
+      const result = await dbClient.addFile(fileData);
+      responseData = { id: result.insertedId, ...fileData };
+      delete responseData.localPath;
+      delete responseData._id;
+      res.status(201).json(responseData).end();
     }
   },
 };
